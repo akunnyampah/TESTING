@@ -20,6 +20,7 @@ test-results.xml
 site/
 
 # Local development directories
+waldo_env/
 PAROL6-Desktop-robot-arm/
 PAROL6-python-API/
 Spectral-Micro-BLDC-controller/

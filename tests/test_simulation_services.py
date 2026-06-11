@@ -15,6 +15,8 @@ from waldo_commander.state import (
     recording_state,
     robot_state,
     ui_state,
+    EditorTab,
+    editor_tabs_state,
 )
 from parol6.client.dry_run_client import DryRunRobotClient
 from waldo_commander.services.path_preview_client import PathPreviewClient
@@ -159,10 +161,23 @@ def mock_editor():
     mock_editor.program_textarea = mock_textarea
     ui_state.editor_panel = mock_editor
     old_robot = ui_state.robot
+    old_tabs = list(editor_tabs_state.tabs)
+    old_active_tab_id = editor_tabs_state.active_tab_id
+    tab = EditorTab(
+        id="test-tab",
+        filename="program.py",
+        file_path=None,
+        content="# Initial code\n",
+        saved_content="# Initial code\n",
+    )
+    editor_tabs_state.tabs = [tab]
+    editor_tabs_state.active_tab_id = tab.id
     ui_state.robot = get_robot()
     yield mock_editor
     ui_state.editor_panel = None
     ui_state.robot = old_robot
+    editor_tabs_state.tabs = old_tabs
+    editor_tabs_state.active_tab_id = old_active_tab_id
 
 
 class TestMotionRecorder:
@@ -179,6 +194,19 @@ class TestMotionRecorder:
         assert "rbt.move_l([150.000, 250.000, 350.000" in inserted_code
         assert "speed=" in inserted_code
         assert "accel=" in inserted_code
+
+    def test_capture_current_pose_syncs_active_tab_content(self, mock_editor):
+        """Programmatic recorder inserts should be included in save content."""
+        set_robot_pose(150.0, 250.0, 350.0)
+
+        recorder = MotionRecorder()
+        recorder.capture_current_pose()
+
+        active_tab = editor_tabs_state.get_active_tab()
+        assert active_tab is not None
+        assert active_tab.content == mock_editor.program_textarea.value
+        assert "rbt.move_l([150.000, 250.000, 350.000" in active_tab.content
+        assert active_tab.is_dirty is True
 
     def test_capture_current_pose_joints_mode(self, mock_editor):
         """capture_current_pose with joints mode should insert move_j code."""

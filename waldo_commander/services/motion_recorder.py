@@ -112,7 +112,7 @@ class MotionRecorder:
             if set_tool_re.match(line):
                 # Update existing select_tool with current tool
                 lines[i] = set_tool_line
-                textarea.value = "\n".join(lines)
+                self._set_editor_content("\n".join(lines))
                 logger.info("Updated existing select_tool to %s", tool_key)
                 return
 
@@ -124,7 +124,7 @@ class MotionRecorder:
         for i, line in enumerate(lines):
             if motion_re.match(line):
                 lines.insert(i, set_tool_line)
-                textarea.value = "\n".join(lines)
+                self._set_editor_content("\n".join(lines))
                 logger.info(
                     "Inserted select_tool before first motion at line %d", i + 1
                 )
@@ -392,15 +392,40 @@ class MotionRecorder:
             if val and not val.endswith("\n"):
                 val += "\n"
             new_value = val + snippet + "\n"
-            # Direct assignment - NiceGUI's binding handles the update
-            # This will trigger the editor's on_change -> debounced simulation
-            textarea.value = new_value
+            self._set_editor_content(new_value)
 
             # Flash the newly added line
             new_line_number = lines_before + 1
             ui_state.editor_panel.flash_editor_lines([new_line_number])
         else:
             logger.error("Editor textarea not ready - open Program tab first")
+
+    def _set_editor_content(self, content: str) -> None:
+        """Set editor content and keep the active tab model in sync.
+
+        File save/download uses EditorTab.content while the visible editor is
+        program_textarea.value. Programmatic CodeMirror updates do not always
+        fire the normal on_change path, so recorder inserts must update both.
+        """
+        editor_panel = ui_state.editor_panel
+        textarea = editor_panel.program_textarea
+        textarea.value = content
+
+        tab = editor_tabs_state.get_active_tab()
+        if tab is None:
+            return
+
+        tab.content = content
+
+        update_dirty_dot = getattr(editor_panel, "_update_dirty_dot", None)
+        if callable(update_dirty_dot):
+            update_dirty_dot(tab)
+
+        schedule_simulation = getattr(
+            editor_panel, "schedule_debounced_simulation", None
+        )
+        if callable(schedule_simulation):
+            schedule_simulation()
 
 
 # Singleton
