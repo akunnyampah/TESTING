@@ -19,6 +19,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import logging
+import os
 import sys
 from typing import Protocol
 
@@ -43,6 +44,7 @@ _PLACEHOLDER = Response(content=_BLACK_1PX, media_type="image/png")
 
 _STREAM_FPS = 30
 _STREAM_BOUNDARY = b"frame"
+_CAMERA_FEATURE_ENABLED = os.environ.get("WALDO_CAMERA_ENABLED") == "1"
 
 
 # ---------------------------------------------------------------------------
@@ -192,6 +194,12 @@ class CameraService:
         """Open a camera device and begin capturing."""
         self.stop()
 
+        if not _CAMERA_FEATURE_ENABLED:
+            logger.info(
+                "Camera feature disabled; set WALDO_CAMERA_ENABLED=1 to enable it"
+            )
+            return
+
         backend: CaptureBackend | None = None
 
         # Try linuxpy first on Linux
@@ -264,6 +272,9 @@ def enumerate_video_devices(max_check: int = 10) -> list[dict[str, int | str]]:
 
     Returns a list of ``{"index": int, "label": str}`` dicts.
     """
+    if not _CAMERA_FEATURE_ENABLED:
+        return []
+
     if sys.platform == "linux":
         devs = _enumerate_v4l2(max_check)
         if devs is not None:
