@@ -1,8 +1,8 @@
 # TASKPLAN.md — Waldo Commander ROS 2 Integration
-# Last updated: 2026-06-11 20:40
+# Last updated: 2026-06-13
 
 ## Status keseluruhan
-[PHASE 1 of 4] / [COMPLETE — awaiting user confirmation to start Phase 2]
+[PHASE 2 of 4] / [COMPLETE — awaiting user confirmation to start Phase 3]
 
 ---
 
@@ -21,12 +21,12 @@
 
 ## Phase 2 — Setup struktur file baru
 
-- [ ] TASK-11 — Buat folder waldo_commander/ros2/
-- [ ] TASK-12 — Buat waldo_commander/ros2/__init__.py
-- [ ] TASK-13 — Buat waldo_commander/ros2/config.py (workspace limits)
-- [ ] TASK-14 — Buat waldo_commander/ros2/bridge.py (rclpy node + IK client)
-- [ ] TASK-15 — Buat waldo_commander/ros2/rviz_launcher.py
-- [ ] TASK-16 — Buat waldo_commander/ui/panels/ros2_panel.py (NiceGUI tab)
+- [x] TASK-11 — Buat folder waldo_commander/ros2/  ✓
+- [x] TASK-12 — Buat waldo_commander/ros2/__init__.py  ✓
+- [x] TASK-13 — Buat waldo_commander/ros2/config.py (workspace limits)  ✓
+- [x] TASK-14 — Buat waldo_commander/ros2/bridge.py (rclpy node + IK client)  ✓
+- [x] TASK-15 — Buat waldo_commander/ros2/rviz_launcher.py  ✓
+- [x] TASK-16 — Buat waldo_commander/ui/panels/ros2_panel.py (NiceGUI tab)  ✓
 
 ## Phase 3 — Integrasi ke Waldo
 
@@ -94,3 +94,4 @@
 |---------|--------------|---------|
 | 2026-06-11 | TASK-01 s/d TASK-05 | Semua dokumen Agent/ dibaca (CLAUDE.md, PRD.md, SKILL.md, BrandGuidelines.md, TASKPLAN_INSTRUCTIONS.md) |
 | 2026-06-11 | TASK-06 s/d TASK-10 | Eksplorasi kode selesai — tab registrasi, route pattern, 3D viewer, NiceGUI version teridentifikasi |
+| 2026-06-13 | TASK-11 s/d TASK-16 | Phase 2 selesai — ros2/ module + ui/panels/ros2_panel.py dibuat |
