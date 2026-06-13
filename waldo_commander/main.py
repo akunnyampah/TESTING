@@ -43,6 +43,8 @@ from waldo_commander.numba_pipelines import (
 )
 from waldo_commander.profiles import get_robot
 from waldo_commander.services.camera_service import camera_service
+import waldo_commander.ros2.routes  # noqa: F401  — registers /api/ros/* and /api/rviz/* endpoints
+from waldo_commander.ui.panels.ros2_panel import create_ros2_tab_content
 from waldo_commander.services.path_visualizer import warm_process_pool
 from waldo_commander.services.urdf_scene import (
     UrdfScene,
@@ -488,6 +490,8 @@ def _build_left_panels(panels_wrap: ui.element) -> dict:
         gripper_tab.props("disable")
         gripper_tab.mark("tab-gripper")
         ui_state._gripper_tab = gripper_tab
+        ros2_tab = ui.tab(name="ros2", label="", icon="smart_toy")
+        ros2_tab.mark("tab-ros2")
 
     # ---- Top panels container ----
     with (
@@ -581,6 +585,15 @@ def _build_left_panels(panels_wrap: ui.element) -> dict:
                     ui_state.gripper_page.build()
 
             ui_state._build_gripper_content = _build_gripper_content
+
+        with ui.tab_panel("ros2").classes("gap-2 overlay-card overflow-hidden"):
+            with ui.row().classes("w-full"):
+                ui.label("ROS 2").classes("text-lg font-medium")
+                ui.space()
+                ui.button(icon="close", on_click=close_top_panels).props(
+                    "flat round dense color=white"
+                )
+            create_ros2_tab_content()
 
         def update_top_layout(e=None):
             new_tab = e.args if e and e.args else side_tabs.value or ""

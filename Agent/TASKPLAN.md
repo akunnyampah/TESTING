@@ -2,7 +2,7 @@
 # Last updated: 2026-06-13
 
 ## Status keseluruhan
-[PHASE 2 of 4] / [COMPLETE — awaiting user confirmation to start Phase 3]
+[PHASE 3 of 4] / [COMPLETE — awaiting user confirmation to start Phase 4]
 
 ---
 
@@ -30,13 +30,13 @@
 
 ## Phase 3 — Integrasi ke Waldo
 
-- [ ] TASK-17 — Tambah endpoint POST /api/ros/preview ke server
-- [ ] TASK-18 — Tambah endpoint POST /api/ros/execute ke server
-- [ ] TASK-19 — Tambah endpoint GET /api/ros/status ke server
-- [ ] TASK-20 — Tambah endpoint POST /api/rviz/launch ke server
-- [ ] TASK-21 — Tambah endpoint POST /api/rviz/close ke server
-- [ ] TASK-22 — Tambah GET /api/rviz/status ke server
-- [ ] TASK-23 — Daftarkan tab ROS 2 di titik integrasi (1 baris)
+- [x] TASK-17 — Tambah endpoint POST /api/ros/preview ke server  ✓
+- [x] TASK-18 — Tambah endpoint POST /api/ros/execute ke server  ✓
+- [x] TASK-19 — Tambah endpoint GET /api/ros/status ke server  ✓
+- [x] TASK-20 — Tambah endpoint POST /api/rviz/launch ke server  ✓
+- [x] TASK-21 — Tambah endpoint POST /api/rviz/close ke server  ✓
+- [x] TASK-22 — Tambah GET /api/rviz/status ke server  ✓
+- [x] TASK-23 — Daftarkan tab ROS 2 di titik integrasi  ✓
 
 ## Phase 4 — Verifikasi
 
@@ -95,3 +95,4 @@
 | 2026-06-11 | TASK-01 s/d TASK-05 | Semua dokumen Agent/ dibaca (CLAUDE.md, PRD.md, SKILL.md, BrandGuidelines.md, TASKPLAN_INSTRUCTIONS.md) |
 | 2026-06-11 | TASK-06 s/d TASK-10 | Eksplorasi kode selesai — tab registrasi, route pattern, 3D viewer, NiceGUI version teridentifikasi |
 | 2026-06-13 | TASK-11 s/d TASK-16 | Phase 2 selesai — ros2/ module + ui/panels/ros2_panel.py dibuat |
+| 2026-06-13 | TASK-17 s/d TASK-23 | Phase 3 selesai — routes.py (6 endpoint) + tab ROS 2 di main.py |
