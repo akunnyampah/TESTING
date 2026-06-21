@@ -48,6 +48,10 @@ class PlaybackController:
         self._sim_timer: ui.timer | None = None
         self._timeline: Timeline | None = None
         self._updating_slider: bool = False
+        self._capture_move_type: str = "cartesian"
+        self._capture_mode_btn: ui.button | None = None
+        self._capture_mode_tooltip: ui.tooltip | None = None
+        self._capture_btn_tooltip: ui.tooltip | None = None
         self._last_tick_time: float = 0.0
         self._exec_start_time: float = 0.0
         self._exec_step_index: int = -1
@@ -175,13 +179,22 @@ class PlaybackController:
             self._editor.record_btn.mark("editor-record-btn")
 
             # 7. Capture position
-            self._editor._capture_btn = (
-                ui.button(
-                    icon="camera_alt", on_click=motion_recorder.capture_current_pose
+            with ui.row().classes("items-center gap-0"):
+                self._capture_mode_btn = (
+                    ui.button("L", on_click=self._toggle_capture_mode)
+                    .props("round dense flat size=xs")
+                    .classes("text-white font-bold")
                 )
-                .props("round dense unelevated")
-                .tooltip("Capture Current Pose")
-            )
+                with self._capture_mode_btn:
+                    self._capture_mode_tooltip = ui.tooltip("Switch to move_j (Joint)")
+                self._editor._capture_btn = ui.button(
+                    icon="camera_alt",
+                    on_click=lambda: motion_recorder.capture_current_pose(
+                        self._capture_move_type
+                    ),
+                ).props("round dense unelevated")
+                with self._editor._capture_btn:
+                    self._capture_btn_tooltip = ui.tooltip("Capture Current Pose (move_l)")
 
             # 8. Log show/hide
             self._editor.log_toggle_btn = (
@@ -192,6 +205,24 @@ class PlaybackController:
             with self._editor.log_toggle_btn:
                 self._editor._log_toggle_btn_tooltip = ui.tooltip("Show Output")
             self._editor.log_toggle_btn.mark("editor-log-toggle")
+
+    def _toggle_capture_mode(self) -> None:
+        if self._capture_move_type == "cartesian":
+            self._capture_move_type = "joints"
+            if self._capture_mode_btn:
+                self._capture_mode_btn.text = "J"
+            if self._capture_mode_tooltip:
+                self._capture_mode_tooltip.text = "Switch to move_l (Cartesian)"
+            if self._capture_btn_tooltip:
+                self._capture_btn_tooltip.text = "Capture Current Pose (move_j)"
+        else:
+            self._capture_move_type = "cartesian"
+            if self._capture_mode_btn:
+                self._capture_mode_btn.text = "L"
+            if self._capture_mode_tooltip:
+                self._capture_mode_tooltip.text = "Switch to move_j (Joint)"
+            if self._capture_btn_tooltip:
+                self._capture_btn_tooltip.text = "Capture Current Pose (move_l)"
 
     def setup_timers(self) -> None:
         """Create timers and register listeners. Must be called within client context."""

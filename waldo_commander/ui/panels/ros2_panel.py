@@ -6,8 +6,8 @@ Returns a dict of UI element references for testing.
 
 from __future__ import annotations
 
-import asyncio
 import logging
+import math
 
 import numpy as np
 from nicegui import ui
@@ -37,17 +37,17 @@ def create_ros2_tab_content() -> dict:
         )
         with ui.column().classes("gap-1 w-full"):
             x_input = (
-                ui.number("X (m)", value=0.3, step=0.001, format="%.3f")
+                ui.number("X (mm)", value=0.0, step=1.0, format="%.1f")
                 .classes("w-full")
                 .mark("ros2-x-input")
             )
             y_input = (
-                ui.number("Y (m)", value=0.0, step=0.001, format="%.3f")
+                ui.number("Y (mm)", value=300.0, step=1.0, format="%.1f")
                 .classes("w-full")
                 .mark("ros2-y-input")
             )
             z_input = (
-                ui.number("Z (m)", value=0.4, step=0.001, format="%.3f")
+                ui.number("Z (mm)", value=100.0, step=1.0, format="%.1f")
                 .classes("w-full")
                 .mark("ros2-z-input")
             )
@@ -107,9 +107,9 @@ def create_ros2_tab_content() -> dict:
             execute_btn.props("disabled")
             return
 
-        x = x_input.value if x_input.value is not None else 0.0
-        y = y_input.value if y_input.value is not None else 0.0
-        z = z_input.value if z_input.value is not None else 0.0
+        x = (x_input.value if x_input.value is not None else 0.0) / 1000.0
+        y = (y_input.value if y_input.value is not None else 0.0) / 1000.0
+        z = (z_input.value if z_input.value is not None else 0.0) / 1000.0
 
         # Workspace bounding-box check (fast, no thread needed)
         ok, reason = check_workspace(x, y, z)
@@ -119,34 +119,49 @@ def create_ros2_tab_content() -> dict:
             _last_ik.clear()
             return
 
-        # IK is blocking — run in thread pool to avoid blocking asyncio
         _set_status(None, "Computing...")
         preview_btn.props("disabled")
         try:
-            loop = asyncio.get_running_loop()
-            bridge = WaldoROS2Bridge.get_instance()
-            result: dict = await loop.run_in_executor(
-                None, bridge.compute_ik_sync, x, y, z
+            from waldo_commander.services.urdf_scene.ik_solver import EditingIKSolver
+            from waldo_commander.state import robot_state, ui_state
+
+            solver = EditingIKSolver(robot=ui_state.active_robot)
+            ik = solver.solve(
+                target_pos=np.array([x, y, z]),
+                current_angles=robot_state.angles.rad,
+                throttle=False,
+                target_orientation=None,
             )
         except Exception as exc:
             logger.warning("ROS 2 bridge error during preview: %s", exc)
-            _set_status(False, "ROS 2 unavailable")
+            _set_status(False, "IK solver error")
             execute_btn.props("disabled")
             _last_ik.clear()
             return
         finally:
             preview_btn.props(remove="disabled")
 
-        if result["success"]:
+        if ik is None or not ik.success:
             _last_ik.clear()
-            _last_ik.update(result)
-            _set_status(True, "Pose reachable")
-            execute_btn.props(remove="disabled")
-            _update_viewer(result["joint_angles_rad"])
-        else:
-            _last_ik.clear()
-            _set_status(False, result.get("reason", "IK failed — pose not reachable"))
+            _set_status(False, "IK failed — pose not reachable")
             execute_btn.props("disabled")
+            return
+
+        try:
+            WaldoROS2Bridge.get_instance().publish_joint_states(ik.angles)
+        except Exception as exc:
+            logger.warning("ROS 2 publish failed (preview still valid): %s", exc)
+
+        result = {
+            "success": True,
+            "joint_angles_rad": ik.angles,
+            "joint_angles_deg": [math.degrees(a) for a in ik.angles],
+        }
+        _last_ik.clear()
+        _last_ik.update(result)
+        _set_status(True, "Pose reachable")
+        execute_btn.props(remove="disabled")
+        _update_viewer(result["joint_angles_rad"])
 
     async def handle_execute() -> None:
         if not _last_ik.get("success"):

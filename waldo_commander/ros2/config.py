@@ -4,9 +4,9 @@ from typing import Tuple
 
 # Bounding box workspace for PAROL6 — adjust to match physical setup
 WORKSPACE_LIMITS: dict[str, tuple[float, float]] = {
-    "x": (-0.6, 0.6),   # meters
-    "y": (-0.6, 0.6),   # meters
-    "z": (0.0, 0.9),    # meters — floor of 0.0 prevents sub-table targets
+    "x": (-0.35, 0.35),  # meters
+    "y": (-0.35, 0.35),  # meters
+    "z": (0.0, 0.45),    # meters — floor of 0.0 prevents sub-table targets
 }
 
 

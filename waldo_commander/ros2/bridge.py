@@ -1,4 +1,4 @@
-"""ROS 2 bridge: singleton rclpy node with MoveIt 2 IK client.
+"""ROS 2 bridge: singleton rclpy node with /joint_states publisher.
 
 All rclpy imports are guarded so this module is safe to import when
 ROS 2 is not installed — callers check ROS2_AVAILABLE before use.
@@ -7,41 +7,85 @@ ROS 2 is not installed — callers check ROS2_AVAILABLE before use.
 from __future__ import annotations
 
 import logging
-import math
+import math as _math
 import threading
 
 logger = logging.getLogger(__name__)
 
 try:
     import rclpy
-    from moveit_msgs.srv import GetPositionIK
     from rclpy.node import Node as _RosNodeBase
+    from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile, ReliabilityPolicy
+    from sensor_msgs.msg import JointState
 
     ROS2_AVAILABLE = True
 except ImportError:
     rclpy = None  # type: ignore[assignment]
-    GetPositionIK = None  # type: ignore[assignment]
     _RosNodeBase = object  # type: ignore[assignment,misc]
+    JointState = None  # type: ignore[assignment]
+    QoSProfile = None  # type: ignore[assignment]
+    ReliabilityPolicy = None  # type: ignore[assignment]
+    DurabilityPolicy = None  # type: ignore[assignment]
+    HistoryPolicy = None  # type: ignore[assignment]
     ROS2_AVAILABLE = False
+
+_JOINT_NAMES = ["L1", "L2", "L3", "L4", "L5", "L6"]
+
+# BEST_EFFORT matches rsp's QoS override (set by parol6_moveit rsp.launch.py):
+#   qos_overrides./joint_states.subscription.reliability = best_effort
+# Using RELIABLE (the rclpy shorthand default) causes silent delivery failure
+# in Fast-DDS Jazzy on loopback when the subscriber is BEST_EFFORT.
+_JS_QOS: "QoSProfile | None" = None
+
+
+def _to_rviz_angles(angles: list[float]) -> list[float]:
+    """Convert Waldo IK angles to RViz/parol6.urdf display convention.
+
+    Waldo uses calibrated PAROL6.urdf (all joints +Z axis).
+    RViz uses parol6.urdf (L3-L6 on -Z axis, different joint origins).
+    This mapping is derived from URDF comparison + visual verification.
+
+    Args:
+        angles: [L1..L6] in radians, Waldo convention
+    Returns:
+        [L1..L6] in radians, RViz/parol6.urdf convention
+    """
+    return [
+        -angles[0],                        # L1: flip
+        angles[1],                         # L2: unchanged
+        -(angles[2] - _math.pi),           # L3: flip + π offset
+        -angles[3] + _math.pi,             # L4: flip + π offset
+        -angles[4],                        # L5: flip
+        -angles[5],                        # L6: flip
+    ]
 
 
 class WaldoROS2Bridge(_RosNodeBase):  # type: ignore[misc]
-    """Singleton rclpy node that holds the MoveIt 2 IK service client.
+    """Singleton rclpy node that publishes /joint_states for RViz.
 
     Use ``get_instance()`` — never instantiate directly.
     The spin loop runs in a daemon thread so it never blocks Waldo's asyncio loop.
     """
 
-    _instance: WaldoROS2Bridge | None = None
-    _spin_thread: threading.Thread | None = None
+    _instance: "WaldoROS2Bridge | None" = None
+    _spin_thread: "threading.Thread | None" = None
 
     def __init__(self) -> None:
         if ROS2_AVAILABLE:
+            global _JS_QOS
             super().__init__("waldo_ros2_bridge")
-            self._ik_client = self.create_client(GetPositionIK, "/compute_ik")
+            _JS_QOS = QoSProfile(
+                depth=10,
+                reliability=ReliabilityPolicy.BEST_EFFORT,
+                durability=DurabilityPolicy.VOLATILE,
+                history=HistoryPolicy.KEEP_LAST,
+            )
+            self._last_angles: list[float] | None = None
+            self._js_pub = self.create_publisher(JointState, "/joint_states", _JS_QOS)
+            self._pub_timer = self.create_timer(0.1, self._timer_publish_cb)
 
     @classmethod
-    def get_instance(cls) -> WaldoROS2Bridge:
+    def get_instance(cls) -> "WaldoROS2Bridge":
         """Return the singleton bridge, initialising rclpy on first call.
 
         Raises RuntimeError if ROS 2 is not installed.
@@ -60,39 +104,27 @@ class WaldoROS2Bridge(_RosNodeBase):  # type: ignore[misc]
             logger.info("WaldoROS2Bridge initialised and spin thread started")
         return cls._instance
 
-    def compute_ik_sync(self, x: float, y: float, z: float) -> dict:
-        """Compute IK for a Cartesian target synchronously.
+    def _timer_publish_cb(self) -> None:
+        if self._last_angles is None:
+            return
+        msg = JointState()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.frame_id = "world"
+        msg.name = _JOINT_NAMES
+        msg.position = _to_rviz_angles(self._last_angles)
+        self._js_pub.publish(msg)
 
-        Safe to call from any thread via ``asyncio.run_in_executor``.
-        Returns a dict with keys:
-          success (bool), joint_angles_rad (list), joint_angles_deg (list)
-          — or — success=False, reason (str) on failure.
+    def publish_joint_states(self, angles_rad: list[float]) -> None:
+        """Publish joint angles to /joint_states for RViz display.
+
+        Args:
+            angles_rad: Joint angles in radians, ordered [L1..L6].
         """
-        if not self._ik_client.wait_for_service(timeout_sec=2.0):
-            return {"success": False, "reason": "MoveIt 2 service not running"}
-
-        req = GetPositionIK.Request()
-        req.ik_request.group_name = "arm"
-        req.ik_request.pose_stamped.header.frame_id = "base_link"
-        req.ik_request.pose_stamped.pose.position.x = x
-        req.ik_request.pose_stamped.pose.position.y = y
-        req.ik_request.pose_stamped.pose.position.z = z
-        req.ik_request.pose_stamped.pose.orientation.w = 1.0  # upright orientation
-
-        future = self._ik_client.call_async(req)
-        rclpy.spin_until_future_complete(self, future, timeout_sec=5.0)
-
-        if future.result() is None:
-            return {"success": False, "reason": "IK failed — pose not reachable"}
-
-        result = future.result()
-        if result.error_code.val == 1:  # MoveItErrorCodes.SUCCESS
-            angles_rad = list(result.solution.joint_state.position)
-            angles_deg = [math.degrees(a) for a in angles_rad]
-            return {
-                "success": True,
-                "joint_angles_rad": angles_rad,
-                "joint_angles_deg": angles_deg,
-            }
-
-        return {"success": False, "reason": "IK failed — pose not reachable"}
+        self._last_angles = list(angles_rad)
+        msg = JointState()
+        msg.header.stamp = self.get_clock().now().to_msg()
+        msg.header.frame_id = "world"
+        msg.name = _JOINT_NAMES
+        msg.position = _to_rviz_angles(angles_rad)
+        self._js_pub.publish(msg)
+        logger.info("[JS] angles_rad=%s", [round(a, 3) for a in angles_rad])

@@ -4,8 +4,10 @@ Imported by main.py to register routes with ng_app (NiceGUI/FastAPI).
 """
 from __future__ import annotations
 
-import asyncio
 import logging
+import math
+
+import numpy as np
 
 from nicegui import app as ng_app
 from pydantic import BaseModel
@@ -40,15 +42,36 @@ async def _ros_preview(body: _PreviewRequest):
     if not ok:
         return {"success": False, "reason": reason}
     try:
-        loop = asyncio.get_running_loop()
-        bridge = WaldoROS2Bridge.get_instance()
-        result: dict = await loop.run_in_executor(
-            None, bridge.compute_ik_sync, body.x, body.y, body.z
+        from waldo_commander.services.urdf_scene.ik_solver import EditingIKSolver
+        from waldo_commander.state import robot_state, ui_state
+
+        solver = EditingIKSolver(robot=ui_state.active_robot)
+        result = solver.solve(
+            target_pos=np.array([body.x, body.y, body.z]),
+            current_angles=robot_state.angles.rad,
+            throttle=False,
+            target_orientation=None,
         )
     except Exception as exc:
-        logger.warning("ROS 2 bridge error in /api/ros/preview: %s", exc)
+        logger.warning("IK solver error in /api/ros/preview: %s", exc)
         return {"success": False, "reason": str(exc)}
-    return result
+
+    if result is None:
+        return {"success": False, "reason": "IK solver returned no result"}
+    if not result.success:
+        return {"success": False, "reason": "IK failed — pose not reachable"}
+
+    try:
+        WaldoROS2Bridge.get_instance().publish_joint_states(result.angles)
+    except Exception as exc:
+        logger.warning("ROS 2 publish failed (preview still valid): %s", exc)
+
+    angles_deg = [math.degrees(a) for a in result.angles]
+    return {
+        "success": True,
+        "joint_angles_rad": result.angles,
+        "joint_angles_deg": angles_deg,
+    }
 
 
 @ng_app.post("/api/ros/execute")
