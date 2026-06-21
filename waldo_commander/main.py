@@ -466,6 +466,16 @@ def update_ui_from_status() -> None:
     if tool_key_changed:
         robot_state.notify_changed()
 
+    # Realtime RViz mirror — publish joint state if bridge is active
+    try:
+        from waldo_commander.ros2.bridge import ROS2_AVAILABLE, WaldoROS2Bridge
+        if ROS2_AVAILABLE and WaldoROS2Bridge._instance is not None:
+            WaldoROS2Bridge._instance.update_angles(
+                list(robot_state.angles.rad)
+            )
+    except Exception:
+        pass  # never let RViz publishing crash the status loop
+
 
 def _build_left_panels(panels_wrap: ui.element) -> dict:
     """Build top (program/io/gripper) and bottom (log/help) panel groups.

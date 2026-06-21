@@ -52,10 +52,10 @@ def _to_rviz_angles(angles: list[float]) -> list[float]:
     """
     return [
         -angles[0],                        # L1: flip
-        angles[1],                         # L2: unchanged
+        (angles[1] + _math.pi / 2),        # L2: π/2 offset (Waldo home=-π/2, RViz home=0)
         -(angles[2] - _math.pi),           # L3: flip + π offset
         -angles[3] + _math.pi,             # L4: flip + π offset
-        -angles[4],                        # L5: flip
+        angles[4],                         # L5: unchanged
         -angles[5],                        # L6: flip
     ]
 
@@ -127,4 +127,16 @@ class WaldoROS2Bridge(_RosNodeBase):  # type: ignore[misc]
         msg.name = _JOINT_NAMES
         msg.position = _to_rviz_angles(angles_rad)
         self._js_pub.publish(msg)
-        logger.info("[JS] angles_rad=%s", [round(a, 3) for a in angles_rad])
+        logger.debug("[JS] angles_rad=%s", [round(a, 3) for a in angles_rad])
+
+    def update_angles(self, angles_rad: list[float]) -> None:
+        """Update angles for next timer publish without immediate publish.
+
+        Called from Waldo's status loop (~20Hz). The _timer_publish_cb at
+        10Hz picks up the new values and publishes to /joint_states.
+
+        Args:
+            angles_rad: Current joint angles in radians [L1..L6],
+                        copied from robot_state.angles.rad.
+        """
+        self._last_angles = list(angles_rad)
