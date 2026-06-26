@@ -2,11 +2,16 @@
 
 from typing import Tuple
 
-# Bounding box workspace for PAROL6 — adjust to match physical setup
+# Workspace limits derived from PAROL6 workspace hull STL
+# (~/.waldo-commander/workspace_hull.stl, generated 2026-06-13)
+# Values are 95th-percentile hull extents — excludes near-singular
+# configurations at workspace boundary.
+# Z min = 0.0 kept for table clearance safety.
+# Full hull extents: X(-0.369,+0.446) Y(-0.446,+0.446) Z(-0.122,+0.533)
 WORKSPACE_LIMITS: dict[str, tuple[float, float]] = {
-    "x": (-0.35, 0.35),  # meters
-    "y": (-0.35, 0.35),  # meters
-    "z": (0.0, 0.45),    # meters — floor of 0.0 prevents sub-table targets
+    "x": (-0.34, 0.43),  # meters
+    "y": (-0.43, 0.43),  # meters
+    "z": (0.0, 0.53),    # meters — floor of 0.0 kept for table clearance
 }
 
 

@@ -1296,7 +1296,9 @@ class ControlPanel:
     async def _wait_and_record_jog_end(self) -> None:
         """Wait for robot motion to stop, then record the jog end position."""
         try:
-            settled = await self.client.wait_motion(timeout=30.0, settle_window=0.5)
+            settled = await self.client.wait_motion(
+                timeout=30.0, settle_window=0.5, motion_start_timeout=5.0
+            )
             if not settled:
                 logger.warning("Jog: wait timed out, recording current position")
         except asyncio.CancelledError:
@@ -1304,8 +1306,7 @@ class ControlPanel:
             return
         except Exception as e:
             logger.warning("Jog: wait_motion failed: %s", e)
-        finally:
-            self._jog_end_wait_task = None
+        self._jog_end_wait_task = None
         motion_recorder.on_jog_end()
 
     async def move_joint_to_angle(self, joint_index: int, target_deg: float) -> None:
