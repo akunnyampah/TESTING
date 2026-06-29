@@ -51,12 +51,12 @@ def _to_rviz_angles(angles: list[float]) -> list[float]:
         [L1..L6] in radians, RViz/parol6.urdf convention
     """
     return [
-        -angles[0],                        # L1: flip
+        angles[0],                         # L1: no conversion (both URDFs +Z, rpy=0)
         (angles[1] + _math.pi / 2),        # L2: π/2 offset (Waldo home=-π/2, RViz home=0)
         -(angles[2] - _math.pi),           # L3: flip + π offset
-        -angles[3] + _math.pi,             # L4: flip + π offset
+        -angles[3],                        # L4: flip
         angles[4],                         # L5: unchanged
-        -angles[5],                        # L6: flip
+        angles[5] - _math.pi,              # L6: offset by π (Waldo home=180°, RViz home=0°)
     ]
 
 

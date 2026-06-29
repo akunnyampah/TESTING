@@ -284,6 +284,9 @@ Files to rewrite: bridge.py, routes.py (/api/ros/preview), rviz_launcher.py
 | 2026-06-14 | TASK-41,42,43 | Pipeline confirmed end-to-end: X/Y/Z input → IK → /joint_states → rsp → /tf → RViz renders pose. Robot model visible. Known limitation: RViz mouse interaction crashes (Qt/snap conflict, view-only workaround via pre-set camera). |
 | 2026-06-21 | TASK-47,48 | All joints verified correct in RViz realtime mirror. _to_rviz_angles() mapping finalized: L1=−θ, L2=θ+π/2, L3=−(θ−π), L4=−θ+π, L5=θ, L6=−θ |
 | 2026-06-21 | cleanup | bridge.py: [JS] angles_rad log level reverted INFO → DEBUG (was elevated during investigation) |
+| 2026-06-29 | bugfix | bridge.py: _to_rviz_angles() L1 removed incorrect negation. Formula was `-angles[0]` (flip), corrected to `angles[0]` (identity). Both URDFs use +Z axis with rpy=0 — no conversion needed. Empirical: Waldo +45°→RViz -45° (wrong) → now Waldo +45°→RViz +45° (correct). |
+| 2026-06-29 | bugfix | bridge.py: _to_rviz_angles() L4 removed incorrect π offset. Formula was `-angles[3] + π` (constant 180° bias), corrected to `-angles[3]` (flip only). Mathematically verified: Waldo home 0° → RViz 0° (correct), no constant offset in URDF joint chain. |
+| 2026-06-29 | bugfix | bridge.py: _to_rviz_angles() L6 corrected home offset. Formula was `-angles[5]` (flip), corrected to `angles[5] - π` (offset by π). Waldo L6 home=180°, RViz L6 home=0°. Verified: all 6 joints at home → [90°,0°,0°,0°,0°,0°] in RViz ✓ |
 
 ---
 

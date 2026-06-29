@@ -29,10 +29,15 @@ def _clean_env() -> dict:
     # conflicts with the system GLIBC 2.39, producing: undefined symbol __libc_pthread_init.
     for _var in ("GTK_PATH", "GTK_EXE_PREFIX", "GTK_IM_MODULE_FILE"):
         env.pop(_var, None)
-    # Force Qt to use XWayland backend — RViz2 crashes on native
-    # Wayland due to OpenGL mouse interaction bugs in Qt Wayland plugin.
-    # XWayland is stable and fully supported for RViz2.
-    env["QT_QPA_PLATFORM"] = "xcb"
+    # Inherit X11/display vars if Waldo started in a context that lacks them
+    # (e.g. VS Code integrated terminal strips DISPLAY, XDG_RUNTIME_DIR).
+    for _var in ("DISPLAY", "XDG_RUNTIME_DIR", "XDG_SESSION_TYPE",
+                 "XDG_CURRENT_DESKTOP", "GDK_BACKEND"):
+        if _var not in env and _var in os.environ:
+            env[_var] = os.environ[_var]
+    # Only set a DISPLAY fallback if none was found — do not force QT_QPA_PLATFORM,
+    # let Qt auto-detect the backend from the session type instead.
+    env.setdefault("DISPLAY", ":1")
     return env
 
 
