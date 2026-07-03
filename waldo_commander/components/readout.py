@@ -235,8 +235,10 @@ class ReadoutPanel:
 
     def build(self, anchor: str = "tl") -> None:
         """Render the top-left readout panel as an overlay card."""
-        with ui.card().classes(f"overlay-panel overlay-card overlay-{anchor}"):
-            with ui.column().classes("gap-1"):
+        _SHOW_ACTION_LOG = False  # set True to re-enable
+        _SHOW_DI_CHIPS = False  # set True to re-enable DI1/DI2
+        with ui.card().classes(f"overlay-panel overlay-card overlay-{anchor}").style("width: calc(50vw - 24px)"):
+            with ui.column().classes("gap-3 w-full"):
                 # Connectivity + IO row — merged into panel corner
                 with (
                     ui.row()
@@ -277,7 +279,7 @@ class ReadoutPanel:
                                 _FACE_TOOLTIPS[_init_face]
                             )
                         self._backend_label = (
-                            ui.label(ui_state.active_robot.name)
+                            ui.label("ROBOT")
                             .classes("text-lg font-medium ml-2")
                             .style("text-shadow: 0 1px 1px rgba(0,0,0,0.4);")
                         )
@@ -302,15 +304,16 @@ class ReadoutPanel:
                     # IO chips — single row
                     with ui.row().classes("gap-0 no-wrap"):
                         self._io_chips = []
-                        for i in range(len(robot_state.io_inputs)):
-                            chip = (
-                                ui.chip(f"DI{i + 1}", color=IO_COLOR_OFF)
-                                .props("dense size=sm")
-                                .classes("text-xs")
-                                .style("box-shadow: none;")
-                                .tooltip(f"Digital Input {i + 1}")
-                            )
-                            self._io_chips.append(chip)
+                        if _SHOW_DI_CHIPS:
+                            for i in range(len(robot_state.io_inputs)):
+                                chip = (
+                                    ui.chip(f"DI{i + 1}", color=IO_COLOR_OFF)
+                                    .props("dense size=sm")
+                                    .classes("text-xs")
+                                    .style("box-shadow: none;")
+                                    .tooltip(f"Digital Input {i + 1}")
+                                )
+                                self._io_chips.append(chip)
                         for i in range(len(robot_state.io_outputs)):
                             chip = (
                                 ui.chip(f"DO{i + 1}", color=IO_COLOR_OFF)
@@ -321,99 +324,101 @@ class ReadoutPanel:
                             )
                             self._io_chips.append(chip)
 
-                # X/Y/Z row - larger text with mm units
-                with ui.row().classes("items-center justify-between w-full no-wrap"):
-                    with ui.row().classes("items-center gap-1 no-wrap"):
-                        ui.label("X:").classes("text-sm tcp-x")
-                        (
-                            ui.label("-")
-                            .bind_text_from(robot_state, "x", backward=_fmt_1f)
-                            .classes("text-3xl tcp-x")
-                            .style("min-width: 5rem; text-align: right;")
-                            .mark("readout-x")
-                        )
-                        ui.label("mm").classes("text-xs tcp-x")
+                # Position + velocity 2-column layout
+                with ui.row().classes("w-full"):
+                    with ui.column().classes("flex-1 gap-3"):
+                        # X/Y/Z row
+                        with ui.row().classes("items-center justify-between w-full no-wrap"):
+                            with ui.row().classes("items-center gap-1 no-wrap flex-1 justify-start"):
+                                ui.label("X:").classes("text-sm tcp-x")
+                                (
+                                    ui.label("-")
+                                    .bind_text_from(robot_state, "x", backward=_fmt_1f)
+                                    .classes("text-3xl tcp-x")
+                                    .style("min-width: 4.5rem; text-align: right;")
+                                    .mark("readout-x")
+                                )
+                                ui.label("mm").classes("text-xs tcp-x")
 
-                    with ui.row().classes("items-center gap-1 no-wrap"):
-                        ui.label("Y:").classes("text-sm tcp-y")
-                        (
-                            ui.label("-")
-                            .bind_text_from(robot_state, "y", backward=_fmt_1f)
-                            .classes("text-3xl tcp-y")
-                            .style("min-width: 5rem; text-align: right;")
-                            .mark("readout-y")
-                        )
-                        ui.label("mm").classes("text-xs tcp-y")
+                            with ui.row().classes("items-center gap-1 no-wrap flex-1 justify-start"):
+                                ui.label("Y:").classes("text-sm tcp-y")
+                                (
+                                    ui.label("-")
+                                    .bind_text_from(robot_state, "y", backward=_fmt_1f)
+                                    .classes("text-3xl tcp-y")
+                                    .style("min-width: 4.5rem; text-align: right;")
+                                    .mark("readout-y")
+                                )
+                                ui.label("mm").classes("text-xs tcp-y")
 
-                    with ui.row().classes("items-center gap-1 no-wrap"):
-                        ui.label("Z:").classes("text-sm tcp-z")
-                        (
-                            ui.label("-")
-                            .bind_text_from(robot_state, "z", backward=_fmt_1f)
-                            .classes("text-3xl tcp-z")
-                            .style("min-width: 5rem; text-align: right;")
-                            .mark("readout-z")
-                        )
-                        ui.label("mm").classes("text-xs tcp-z")
+                            with ui.row().classes("items-center gap-1 no-wrap flex-1 justify-start"):
+                                ui.label("Z:").classes("text-sm tcp-z")
+                                (
+                                    ui.label("-")
+                                    .bind_text_from(robot_state, "z", backward=_fmt_1f)
+                                    .classes("text-3xl tcp-z")
+                                    .style("min-width: 4.5rem; text-align: right;")
+                                    .mark("readout-z")
+                                )
+                                ui.label("mm").classes("text-xs tcp-z")
 
-                # Rx/Ry/Rz + speed row
-                with ui.row().classes("items-center w-full no-wrap"):
-                    with ui.row().classes("items-center gap-1"):
-                        ui.label("Rx:").classes("text-xs tcp-rx")
-                        (
-                            ui.label("-")
-                            .bind_text_from(robot_state, "rx", backward=_fmt_1f)
-                            .classes("text-base tcp-rx")
-                            .style("min-width: 3.5rem; text-align: right;")
-                            .mark("readout-rx")
-                        )
-                        ui.label("°").classes("text-xs tcp-rx")
+                        # Rx/Ry/Rz row
+                        with ui.row().classes("items-center justify-between w-full no-wrap"):
+                            with ui.row().classes("items-center gap-1 flex-1 justify-start"):
+                                ui.label("Rx:").classes("text-sm tcp-rx")
+                                (
+                                    ui.label("-")
+                                    .bind_text_from(robot_state, "rx", backward=_fmt_1f)
+                                    .classes("text-3xl tcp-rx")
+                                    .style("min-width: 4rem; text-align: right;")
+                                    .mark("readout-rx")
+                                )
+                                ui.label("°").classes("text-xs tcp-rx")
 
-                    with ui.row().classes("items-center gap-1"):
-                        ui.label("Ry:").classes("text-xs tcp-ry")
-                        (
-                            ui.label("-")
-                            .bind_text_from(robot_state, "ry", backward=_fmt_1f)
-                            .classes("text-base tcp-ry")
-                            .style("min-width: 3.5rem; text-align: right;")
-                            .mark("readout-ry")
-                        )
-                        ui.label("°").classes("text-xs tcp-ry")
+                            with ui.row().classes("items-center gap-1 flex-1 justify-start"):
+                                ui.label("Ry:").classes("text-sm tcp-ry")
+                                (
+                                    ui.label("-")
+                                    .bind_text_from(robot_state, "ry", backward=_fmt_1f)
+                                    .classes("text-3xl tcp-ry")
+                                    .style("min-width: 4rem; text-align: right;")
+                                    .mark("readout-ry")
+                                )
+                                ui.label("°").classes("text-xs tcp-ry")
 
-                    with ui.row().classes("items-center gap-1"):
-                        ui.label("Rz:").classes("text-xs tcp-rz")
-                        (
-                            ui.label("-")
-                            .bind_text_from(robot_state, "rz", backward=_fmt_1f)
-                            .classes("text-base tcp-rz")
-                            .style("min-width: 3.5rem; text-align: right;")
-                            .mark("readout-rz")
-                        )
-                        ui.label("°").classes("text-xs tcp-rz")
+                            with ui.row().classes("items-center gap-1 flex-1 justify-start"):
+                                ui.label("Rz:").classes("text-sm tcp-rz")
+                                (
+                                    ui.label("-")
+                                    .bind_text_from(robot_state, "rz", backward=_fmt_1f)
+                                    .classes("text-3xl tcp-rz")
+                                    .style("min-width: 4rem; text-align: right;")
+                                    .mark("readout-rz")
+                                )
+                                ui.label("°").classes("text-xs tcp-rz")
 
-                    ui.space()
-
-                    with ui.row().classes("items-center gap-1"):
-                        ui.label("v:").classes("text-xs")
-                        (
-                            ui.label("-")
-                            .bind_text_from(
-                                robot_state,
-                                "tcp_speed",
-                                backward=lambda v: f"{v:.0f}",
+                    with ui.column().classes("items-start justify-center pl-4"):
+                        with ui.row().classes("items-center gap-1"):
+                            ui.label("v:").classes("text-sm")
+                            (
+                                ui.label("-")
+                                .bind_text_from(
+                                    robot_state,
+                                    "tcp_speed",
+                                    backward=lambda v: f"{v:.0f}",
+                                )
+                                .classes("text-3xl")
+                                .style("text-align: center;")
+                                .mark("readout-tcp-speed")
                             )
-                            .classes("text-base")
-                            .style("min-width: 2.5rem; text-align: right;")
-                            .mark("readout-tcp-speed")
-                        )
-                        ui.label("mm/s").classes("text-xs")
+                            ui.label("mm/s").classes("text-xs")
 
                 # Collapsible action log
-                with (
-                    ui.row()
-                    .classes("items-center w-full no-wrap gap-0")
-                    .mark("readout-action-log")
-                ):
+                action_log_row = ui.row().classes(
+                    "items-center w-full no-wrap gap-0"
+                ).mark("readout-action-log")
+                action_log_row.set_visibility(_SHOW_ACTION_LOG)
+                with action_log_row:
                     self._action_scroll_area = (
                         ui.scroll_area()
                         .classes("action-log flex-1")

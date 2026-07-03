@@ -252,7 +252,7 @@ from {backend} import RobotClient
 rbt = RobotClient(host={config.controller_host!r}, port={config.controller_port})
 
 print("Moving to home position...")
-rbt.home()
+rbt.move_j([90.00, -90.00, 180.00, 0.00, 0.00, 180.00], speed=0.5, accel=0.5)
 
 status = rbt.status()
 print(f"Robot status: {{status}}")

@@ -293,7 +293,7 @@ def _inject_css_vars(p: dict[str, str]) -> None:
   --on-accent: var(--color-neutral-900);
 
   /* Joint bar height */
-  --joint-bar-h: 33px;
+  --joint-bar-h: 42px;
 }}
 
 body, .q-page {{ background: var(--ctk-bg); color: var(--ctk-text); }}
@@ -645,7 +645,7 @@ html, body {
   border-radius: 9999px;
   background: transparent !important;
   color: var(--ui-tint) !important;
-  font-size: 19px;
+  font-size: 24px;
 }
 
 .joint-cap:hover {

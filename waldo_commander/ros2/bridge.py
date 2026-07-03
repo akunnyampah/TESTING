@@ -55,7 +55,7 @@ def _to_rviz_angles(angles: list[float]) -> list[float]:
         (angles[1] + _math.pi / 2),        # L2: π/2 offset (Waldo home=-π/2, RViz home=0)
         -(angles[2] - _math.pi),           # L3: flip + π offset
         -angles[3],                        # L4: flip
-        angles[4],                         # L5: unchanged
+        -angles[4],                        # L5: flip direction
         angles[5] - _math.pi,              # L6: offset by π (Waldo home=180°, RViz home=0°)
     ]
 

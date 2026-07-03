@@ -45,6 +45,8 @@ from waldo_commander.profiles import get_robot
 from waldo_commander.services.camera_service import camera_service
 import waldo_commander.ros2.routes  # noqa: F401  — registers /api/ros/* and /api/rviz/* endpoints
 from waldo_commander.ui.panels.ros2_panel import create_ros2_tab_content
+from waldo_commander.ui.panels.kinematics_panel import KinematicsPanel
+from waldo_commander.ui.panels.dh_tab_panel import create_dh_tab_content
 from waldo_commander.services.path_visualizer import warm_process_pool
 from waldo_commander.services.urdf_scene import (
     UrdfScene,
@@ -87,6 +89,7 @@ _shutting_down: bool = False
 control_panel: ControlPanel = None  # ty: ignore[invalid-assignment]
 readout_panel: ReadoutPanel = None  # ty: ignore[invalid-assignment]
 editor_panel: EditorPanel = None  # ty: ignore[invalid-assignment]
+kinematics_panel: KinematicsPanel = None  # ty: ignore[invalid-assignment]
 
 # Persistent connection warning notification
 _connection_notification: ui.notification | None = None
@@ -492,16 +495,20 @@ def _build_left_panels(panels_wrap: ui.element) -> dict:
         program_tab.mark("tab-program")
         io_tab = ui.tab(name="io", label="", icon="settings_input_component")
         io_tab.mark("tab-io")
-        gripper_tab = ui.tab(name="gripper", label="")
-        with gripper_tab:
-            ui.image("/static/icons/robotic-claw.svg").classes("gripper-icon").style(
-                "width: 24px; height: 24px; transform: rotate(180deg); filter: brightness(0) invert(1) opacity(0.8);"
-            )
-        gripper_tab.props("disable")
-        gripper_tab.mark("tab-gripper")
-        ui_state._gripper_tab = gripper_tab
+        _SHOW_GRIPPER_TAB = False  # set True to re-enable
+        if _SHOW_GRIPPER_TAB:
+            gripper_tab = ui.tab(name="gripper", label="")
+            with gripper_tab:
+                ui.image("/static/icons/robotic-claw.svg").classes("gripper-icon").style(
+                    "width: 24px; height: 24px; transform: rotate(180deg); filter: brightness(0) invert(1) opacity(0.8);"
+                )
+            gripper_tab.props("disable")
+            gripper_tab.mark("tab-gripper")
+            ui_state._gripper_tab = gripper_tab
         ros2_tab = ui.tab(name="ros2", label="", icon="smart_toy")
         ros2_tab.mark("tab-ros2")
+        dh_tab = ui.tab(name="dh", label="", icon="table_chart")
+        dh_tab.mark("tab-dh")
 
     # ---- Top panels container ----
     with (
@@ -521,7 +528,7 @@ def _build_left_panels(panels_wrap: ui.element) -> dict:
 
         with ui.tab_panel("program").classes(
             "overlay-card program-panel resizable-panel p-0"
-        ):
+        ).style("width: calc(50vw - 70px); height: calc(50vh - 24px)"):
             editor_panel.build(close_callback=close_top_panels)
             ui.element("div").classes("resize-handle-right")
             ui.element("div").classes("resize-handle-bottom")
@@ -537,64 +544,65 @@ def _build_left_panels(panels_wrap: ui.element) -> dict:
             ui_state.io_page = IoPage(client)
             ui_state.io_page.build()
 
-        with ui.tab_panel("gripper").classes(
-            "gap-2 overlay-card gripper-panel overflow-hidden"
-        ) as gripper_panel_container:
-            gripper_content_built = False
+        if _SHOW_GRIPPER_TAB:
+            with ui.tab_panel("gripper").classes(
+                "gap-2 overlay-card gripper-panel overflow-hidden"
+            ) as gripper_panel_container:
+                gripper_content_built = False
 
-            def _build_gripper_content() -> None:
-                nonlocal gripper_content_built
-                if gripper_content_built:
-                    return
-                gripper_content_built = True
-                with gripper_panel_container:
-                    with ui.row().classes("w-full items-center"):
-                        (
-                            ui.label("Gripper")
-                            .bind_text_from(
-                                robot_state,
-                                "tool_key",
-                                backward=lambda k: f"Gripper: {k}"
-                                if k != "NONE"
-                                else "Gripper",
+                def _build_gripper_content() -> None:
+                    nonlocal gripper_content_built
+                    if gripper_content_built:
+                        return
+                    gripper_content_built = True
+                    with gripper_panel_container:
+                        with ui.row().classes("w-full items-center"):
+                            (
+                                ui.label("Gripper")
+                                .bind_text_from(
+                                    robot_state,
+                                    "tool_key",
+                                    backward=lambda k: f"Gripper: {k}"
+                                    if k != "NONE"
+                                    else "Gripper",
+                                )
+                                .classes("text-lg font-medium")
                             )
-                            .classes("text-lg font-medium")
-                        )
-                        gripper_features_label = ui.label("").classes(
-                            "text-xs text-[var(--ctk-muted)]"
-                        )
+                            gripper_features_label = ui.label("").classes(
+                                "text-xs text-[var(--ctk-muted)]"
+                            )
 
-                        def _update_features(k: str) -> str:
-                            if k == "NONE":
-                                return ""
-                            parts: list[str] = []
-                            try:
-                                tool = client.tool
-                            except (RuntimeError, KeyError, NotImplementedError):
-                                return ""
-                            if not isinstance(tool, GripperTool):
-                                return ""
-                            for m in tool.motions:
-                                if isinstance(m, LinearMotion):
-                                    gap = m.travel_m * 1000 * (2 if m.symmetric else 1)
-                                    parts.append(f"{gap:.1f}mm gap")
-                                    break
-                            channels = {ch.name for ch in tool.channel_descriptors}
-                            if "Current" in channels:
-                                parts.append("Current")
-                            return " · ".join(parts)
+                            def _update_features(k: str) -> str:
+                                if k == "NONE":
+                                    return ""
+                                parts: list[str] = []
+                                try:
+                                    tool = client.tool
+                                except (RuntimeError, KeyError, NotImplementedError):
+                                    return ""
+                                if not isinstance(tool, GripperTool):
+                                    return ""
+                                for m in tool.motions:
+                                    if isinstance(m, LinearMotion):
+                                        gap = m.travel_m * 1000 * (2 if m.symmetric else 1)
+                                        parts.append(f"{gap:.1f}mm gap")
+                                        break
+                                channels = {ch.name for ch in tool.channel_descriptors}
+                                if "Current" in channels:
+                                    parts.append("Current")
+                                return " · ".join(parts)
 
-                        gripper_features_label.bind_text_from(
-                            robot_state, "tool_key", backward=_update_features
-                        )
-                        ui.space()
-                        ui.button(icon="close", on_click=close_top_panels).props(
-                            "flat round dense color=white"
-                        )
-                    ui_state.gripper_page = GripperPage(client)
-                    ui_state.gripper_page.build()
+                            gripper_features_label.bind_text_from(
+                                robot_state, "tool_key", backward=_update_features
+                            )
+                            ui.space()
+                            ui.button(icon="close", on_click=close_top_panels).props(
+                                "flat round dense color=white"
+                            )
+                        ui_state.gripper_page = GripperPage(client)
+                        ui_state.gripper_page.build()
 
-            ui_state._build_gripper_content = _build_gripper_content
+                ui_state._build_gripper_content = _build_gripper_content
 
         with ui.tab_panel("ros2").classes("gap-2 overlay-card overflow-hidden"):
             with ui.row().classes("w-full"):
@@ -604,6 +612,23 @@ def _build_left_panels(panels_wrap: ui.element) -> dict:
                     "flat round dense color=white"
                 )
             create_ros2_tab_content()
+
+        with ui.tab_panel("dh").classes("gap-2 overlay-card overflow-hidden").style("width: calc(50vw - 70px)"):
+            with ui.row().classes("w-full"):
+                ui.label("DH Parameters").classes("text-lg font-medium")
+                ui.space()
+                ui.button(icon="close", on_click=close_top_panels).props(
+                    "flat round dense color=white"
+                )
+            dh_timer = create_dh_tab_content()
+
+        def handle_dh_tab(e) -> None:
+            if e.args == "dh":
+                dh_timer.activate()
+            else:
+                dh_timer.deactivate()
+
+        side_tabs.on("update:model-value", handle_dh_tab)
 
         def update_top_layout(e=None):
             new_tab = e.args if e and e.args else side_tabs.value or ""
@@ -763,7 +788,9 @@ def build_page_content() -> None:
     ui.add_head_html('<script src="/static/js/robot-faces.js" defer></script>')
 
     with ui.column().classes("relative w-screen h-screen overflow-hidden gap-0"):
-        with ui.column().classes("absolute inset-0 z-0"):
+        with ui.column().classes("absolute bottom-0 left-0 z-0").style(
+            "width: 50vw; height: 50vh;"
+        ):
 
             async def _init():
                 try:
@@ -849,7 +876,9 @@ def build_page_content() -> None:
 
         # HUD panels
         readout_panel.build("tr")
-        control_panel.build("br")
+        with ui.column().classes("overlay-panel overlay-br gap-2 items-stretch").style("width: calc(50vw - 24px)"):
+            kinematics_panel.build()
+            control_panel.build(anchor=None)
 
         # Panel resize configuration and tab state restoration
         _setup_panel_persistence(panel_refs)
@@ -1391,7 +1420,7 @@ async def _status_consumer() -> None:
 
 
 def main():
-    global client, control_panel, readout_panel, editor_panel
+    global client, control_panel, readout_panel, editor_panel, kinematics_panel
 
     # CLI: web bind, controller target, and log level
     # Defaults come from config (lazy evaluation - reads env vars at access time)
@@ -1492,6 +1521,7 @@ def main():
     control_panel = ControlPanel(client)
     readout_panel = ReadoutPanel()
     editor_panel = EditorPanel()
+    kinematics_panel = KinematicsPanel()
     # Store panels in ui_state for cross-module access
     ui_state.control_panel = control_panel
     ui_state.editor_panel = editor_panel

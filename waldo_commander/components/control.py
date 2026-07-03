@@ -1543,7 +1543,7 @@ class ControlPanel:
         with (
             ui.tab_panels(jog_mode_tabs, value=joint_tab)
             .classes("cp-jog-panels")
-            .style("width: 400px; height: 225px")
+            .style("width: 100%; height: 270px")
         ):
             # Joint jog panel
             with ui.tab_panel(joint_tab).classes("gap-1"):
@@ -1761,7 +1761,7 @@ class ControlPanel:
                     markup = self._prepare_icon_markup(raw, vb, label, slot_id)
                     cont = ui.html(
                         f"""
-                        <svg viewBox="0 0 24 24" width="100" height="72"
+                        <svg viewBox="0 0 24 24" width="127" height="91"
                             style="cursor:pointer;">
                         <g style="pointer-events:visiblePainted;" fill="currentColor" stroke="currentColor">
                             {markup}
@@ -1789,13 +1789,22 @@ class ControlPanel:
                         "viewbox": vb,
                     }
 
+                with ui.row().classes("w-fit mx-auto gap-0 items-center"):
+                    ui.label("Translation").classes(
+                        "text-xs text-gray-400 uppercase tracking-wide text-center font-bold"
+                    ).style("width: 235px")
+                    ui.element("div").style("width: 53px")
+                    ui.label("Rotation").classes(
+                        "text-xs text-gray-400 uppercase tracking-wide text-center font-bold"
+                    ).style("width: 212px")
+
                 # Translation grid (original shape): XY cross with Z column on the right
                 with (
                     ui.grid(
-                        rows="72px 30px 72px",
-                        columns="90px 30px 72px 42px 72px 30px 72px",
+                        rows="91px 30px 91px",
+                        columns="114px 30px 91px 53px 91px 30px 91px",
                     )
-                    .classes("gap-0")
+                    .classes("gap-0 w-fit mx-auto")
                     .style("place-items: center")
                 ):
                     # Row 1:    [UD2+, UD1-, empty, RUD2+, empty, RUD1+, empty]
@@ -1847,7 +1856,7 @@ class ControlPanel:
         format_tooltip: Callable[[float], str],
     ) -> None:
         """Build a 10-step rating row (speed or acceleration) with persistence."""
-        with ui.row().classes("items-center gap-2 w-full"):
+        with ui.row().classes("items-center gap-1 w-full"):
             icon = ui.icon(icon_name, size="md", color=default_color)
             with icon:
                 tooltip = ui.tooltip(storage_key.replace("_", " ").title())
@@ -1855,11 +1864,19 @@ class ControlPanel:
             setattr(ui_state, ui_attr, stored)
             v_init = max(1, min(10, round(int(stored) / self._RATING_UNIT)))
 
-            rating = ui.rating(max=10, icon="circle", size="16px", value=v_init).props(
-                f':color="{colors}"'
-            )
+            btn_refs: list[ui.button] = []
+            for i in range(1, 11):
+                btn = (
+                    ui.button(
+                        icon="circle",
+                        on_click=lambda e, step=i: self._set_rating_step(ui_attr, step),
+                    )
+                    .props("flat dense round")
+                    .tooltip(f"Level {i}")
+                )
+                btn_refs.append(btn)
             self._rating_widgets[ui_attr] = {
-                "rating": rating,
+                "buttons": btn_refs,
                 "icon": icon,
                 "tooltip": tooltip,
                 "colors": colors,
@@ -1867,26 +1884,13 @@ class ControlPanel:
                 "storage_key": storage_key,
             }
 
-            # Click on the rating dispatches the new step value (1..10) as
-            # e.args; route both UI clicks and keybindings through the same
-            # _set_rating_step path so dependent visuals stay in sync.
-            rating.on(
-                "update:model-value",
-                lambda e, _attr=ui_attr: self._set_rating_step(
-                    _attr, int(e.args) if e.args else 1, sync_widget=False
-                ),
-            )
-            if v_init > 0:
-                self._set_rating_step(ui_attr, v_init, sync_widget=False)
+            self._set_rating_step(ui_attr, v_init)
 
     _RATING_UNIT = 10
 
-    def _set_rating_step(
-        self, ui_attr: str, step: int, *, sync_widget: bool = True
-    ) -> None:
-        """Apply a 1..10 rating step to the row's value, storage, icon color
-        and tooltip text. Set sync_widget=False when invoked from the rating's
-        own change event (the widget already holds the new value)."""
+    def _set_rating_step(self, ui_attr: str, step: int) -> None:
+        """Apply a 1..10 rating step: update state, storage, button visuals,
+        icon color, and tooltip text."""
         refs = self._rating_widgets.get(ui_attr)
         if refs is None:
             return
@@ -1894,8 +1898,9 @@ class ControlPanel:
         new_value = step * self._RATING_UNIT
         setattr(ui_state, ui_attr, new_value)
         app.storage.general[refs["storage_key"]] = new_value
-        if sync_widget:
-            refs["rating"].value = step
+        for i, btn in enumerate(refs["buttons"]):
+            color = refs["colors"][step - 1] if i < step else "grey-6"
+            btn.props(f"flat dense round color={color}")
         refs["icon"].props(f"color={refs['colors'][step - 1]}")
         refs["tooltip"].text = refs["format_tooltip"](step / 10.0)
 
@@ -1907,11 +1912,12 @@ class ControlPanel:
         step = round((current + delta) / self._RATING_UNIT)
         self._set_rating_step(ui_attr, step)
 
-    def build(self, anchor: str = "bl") -> None:
-        """Render the bottom-left control panel (overlay-bl).
+    def build(self, anchor: str | None = "bl") -> None:
+        """Render the control panel card.
 
         Args:
-            anchor: Position anchor for the panel (e.g., "bl" for bottom-left)
+            anchor: Position anchor ("bl", "br", etc.), or None to omit
+                    self-positioning when a wrapper column handles placement.
         """
         # Capture UI client for background task operations
         self._ui_client = ui.context.client
@@ -1927,7 +1933,8 @@ class ControlPanel:
             self.CLICK_HOLD_THRESHOLD_S, ui_client_fn
         )
 
-        with ui.card().classes(f"overlay-panel overlay-card overlay-{anchor} gap-1"):
+        pos_cls = f"overlay-panel overlay-{anchor} " if anchor is not None else ""
+        with ui.card().classes(f"{pos_cls}overlay-card gap-1"):
             with ui.column().classes("gap-2 w-full"):
                 with ui.row().classes("items-center w-full"):
                     with ui.column().classes("gap-1 flex-grow"):
@@ -2026,7 +2033,7 @@ class ControlPanel:
 
     def _build_action_row(self) -> None:
         """Build the action row: Home, Robot/Sim toggle, gizmo controls, camera reset, step input."""
-        with ui.row().classes("gap-2 items-center"):
+        with ui.row().classes("gap-2 items-center w-full"):
             ui.button(icon="home", on_click=self.send_home).props(
                 "dense round unelevated color=teal-6"
             ).tooltip("Home (H)").mark("btn-home")
