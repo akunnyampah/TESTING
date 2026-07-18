@@ -287,6 +287,9 @@ Files to rewrite: bridge.py, routes.py (/api/ros/preview), rviz_launcher.py
 | 2026-06-29 | bugfix | bridge.py: _to_rviz_angles() L1 removed incorrect negation. Formula was `-angles[0]` (flip), corrected to `angles[0]` (identity). Both URDFs use +Z axis with rpy=0 — no conversion needed. Empirical: Waldo +45°→RViz -45° (wrong) → now Waldo +45°→RViz +45° (correct). |
 | 2026-06-29 | bugfix | bridge.py: _to_rviz_angles() L4 removed incorrect π offset. Formula was `-angles[3] + π` (constant 180° bias), corrected to `-angles[3]` (flip only). Mathematically verified: Waldo home 0° → RViz 0° (correct), no constant offset in URDF joint chain. |
 | 2026-06-29 | bugfix | bridge.py: _to_rviz_angles() L6 corrected home offset. Formula was `-angles[5]` (flip), corrected to `angles[5] - π` (offset by π). Waldo L6 home=180°, RViz L6 home=0°. Verified: all 6 joints at home → [90°,0°,0°,0°,0°,0°] in RViz ✓ |
+| 2026-07-06 | Help panel update selesai | 4 tab: Keybindings, Quick Start, Fitur GUI, Safety |
+| 2026-07-06 | Help panel update selesai | assets/help/ folder untuk gambar & video |
+| 2026-07-06 | Help panel update selesai | Auto-show dialog + per-browser storage |
 
 ---
 

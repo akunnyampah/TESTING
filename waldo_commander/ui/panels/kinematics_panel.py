@@ -34,6 +34,7 @@ class KinematicsPanel:
         """Render the kinematics card. Returns UI element refs for testing."""
         _last_ik: dict = {}
         _fk_last_angles: list[float] = []
+        _fk_last_pose: list[float] = []
 
         with ui.card().classes("overlay-card gap-1"):
             with ui.tabs().props("dense").classes("kin-tabs") as kin_tabs:
@@ -117,27 +118,27 @@ class KinematicsPanel:
                     )
                     with ui.grid(columns=2).classes("w-full gap-x-4 gap-y-1"):
                         fk_j1 = (
-                            ui.number("J1 (°)", value=90.0, step=1.0, format="%.1f")
+                            ui.number("Base (°)", value=90.0, step=1.0, format="%.1f")
                             .classes("w-full").mark("fk-j1-input")
                         )
-                        fk_j2 = (
-                            ui.number("J2 (°)", value=-90.0, step=1.0, format="%.1f")
-                            .classes("w-full").mark("fk-j2-input")
-                        )
-                        fk_j3 = (
-                            ui.number("J3 (°)", value=180.0, step=1.0, format="%.1f")
-                            .classes("w-full").mark("fk-j3-input")
-                        )
                         fk_j4 = (
-                            ui.number("J4 (°)", value=0.0, step=1.0, format="%.1f")
+                            ui.number("Wrist 1 (°)", value=0.0, step=1.0, format="%.1f")
                             .classes("w-full").mark("fk-j4-input")
                         )
+                        fk_j2 = (
+                            ui.number("Shoulder (°)", value=-90.0, step=1.0, format="%.1f")
+                            .classes("w-full").mark("fk-j2-input")
+                        )
                         fk_j5 = (
-                            ui.number("J5 (°)", value=0.0, step=1.0, format="%.1f")
+                            ui.number("Wrist 2 (°)", value=0.0, step=1.0, format="%.1f")
                             .classes("w-full").mark("fk-j5-input")
                         )
+                        fk_j3 = (
+                            ui.number("Elbow (°)", value=180.0, step=1.0, format="%.1f")
+                            .classes("w-full").mark("fk-j3-input")
+                        )
                         fk_j6 = (
-                            ui.number("J6 (°)", value=180.0, step=1.0, format="%.1f")
+                            ui.number("Wrist 3 (°)", value=180.0, step=1.0, format="%.1f")
                             .classes("w-full").mark("fk-j6-input")
                         )
 
@@ -210,6 +211,7 @@ class KinematicsPanel:
             fk_warn_label.set_text("")
             fk_execute_btn.props("disabled")
             _fk_last_angles.clear()
+            _fk_last_pose.clear()
 
         async def handle_fk_calculate() -> None:
             fk_inputs = [fk_j1, fk_j2, fk_j3, fk_j4, fk_j5, fk_j6]
@@ -223,6 +225,7 @@ class KinematicsPanel:
             if warnings:
                 fk_warn_label.set_text("⚠ " + "; ".join(warnings))
                 fk_warn_label.classes(remove="hidden")
+                fk_execute_btn.props("disabled")
             else:
                 fk_warn_label.classes(add="hidden")
                 fk_warn_label.set_text("")
@@ -249,20 +252,33 @@ class KinematicsPanel:
             _update_viewer(angles_rad)
             _fk_last_angles.clear()
             _fk_last_angles.extend(angles_deg)
-            fk_execute_btn.props(remove="disabled")
+            _fk_last_pose.clear()
+            _fk_last_pose.extend([
+                pose[0] * 1000,
+                pose[1] * 1000,
+                pose[2] * 1000,
+                math.degrees(pose[3]),
+                math.degrees(pose[4]),
+                math.degrees(pose[5]),
+            ])
+            if not warnings:
+                fk_execute_btn.props(remove="disabled")
 
         async def handle_fk_execute() -> None:
-            if not _fk_last_angles:
+            if not _fk_last_pose:
                 ui.notify("Run Calculate first.", type="warning")
                 return
             from waldo_commander.state import ui_state
             fk_execute_btn.props("disabled")
             try:
-                await ui_state.control_panel.client.teleport(_fk_last_angles)
+                await ui_state.control_panel.client.move_l(
+                    _fk_last_pose, speed=0.5, accel=0.5
+                )
                 ui.notify("Execute sent.", type="positive")
             except Exception as exc:
                 logger.warning("FK Execute failed: %s", exc)
                 ui.notify(f"Execute failed: {exc}", type="negative")
+            _fk_last_pose.clear()
             _fk_last_angles.clear()
 
         # ── Event handlers ────────────────────────────────────────────────
@@ -339,7 +355,7 @@ class KinematicsPanel:
             angles_deg: list[float] = _last_ik["joint_angles_deg"]
             execute_btn.props("disabled")
             try:
-                await ui_state.control_panel.client.teleport(angles_deg)
+                await ui_state.control_panel.client.move_j(angles_deg, speed=0.5, accel=0.5)
                 ui.notify("Execute sent.", type="positive")
             except Exception as exc:
                 logger.warning("Execute failed: %s", exc)

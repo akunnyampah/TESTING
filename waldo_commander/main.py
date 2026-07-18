@@ -1553,6 +1553,7 @@ def main():
             loop="uvloop" if sys.platform != "win32" else "asyncio",
             http="httptools",
             binding_refresh_interval=0.05,
+            storage_secret="waldo-commander-secret-key",
         )
     except KeyboardInterrupt:
         # The NiceGUI on_shutdown hook already cleaned up child processes,
