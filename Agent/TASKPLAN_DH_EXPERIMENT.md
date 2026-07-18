@@ -2,7 +2,7 @@
 # Last updated: 2026-07-06
 
 ## Status keseluruhan
-[PHASE 1 of 4] / [NOT STARTED]
+[PHASE 4 of 4] / [COMPLETE]
 
 ## Deskripsi fitur
 Tab baru "Eksperimen" di dalam panel DH Parameter (sejajar tab "Realtime").
@@ -80,7 +80,7 @@ geometri robot dan bentuk/jangkauan lengan robot.
 
 ## Phase 2 — Implementasi sub-tab struktur
 
-- [ ] TASK-DH-06 — Restructure dh_tab_panel.py:
+- [x] TASK-DH-06 — Restructure dh_tab_panel.py:
         Wrap existing Realtime content inside sub-tab structure:
 
         ui.tabs() with two tabs:
@@ -90,7 +90,7 @@ geometri robot dan bentuk/jangkauan lengan robot.
         Show diff — Realtime content must remain 100% identical.
         Wait for approval.
 
-- [ ] TASK-DH-07 — User approves → Apply restructure
+- [x] TASK-DH-07 — User approves → Apply restructure
 - [ ] TASK-DH-08 — Verify: Realtime tab still works, θ still updates,
         highlight still works, new Eksperimen tab visible
 
@@ -98,7 +98,7 @@ geometri robot dan bentuk/jangkauan lengan robot.
 
 ## Phase 3 — Implementasi tab Eksperimen
 
-- [ ] TASK-DH-09 — Implement input grid in Eksperimen tab:
+- [x] TASK-DH-09 — Implement input grid in Eksperimen tab:
         Layout: table-like grid dengan header row + 6 joint rows
 
         Header: Joint | a (mm) | α (°) | d (mm) | θ (°)
@@ -119,8 +119,8 @@ geometri robot dan bentuk/jangkauan lengan robot.
 
         Show diff. Wait for approval.
 
-- [ ] TASK-DH-10 — User approves → Apply input grid
-- [ ] TASK-DH-11 — Implement _compute_fk_positions() helper:
+- [x] TASK-DH-10 — User approves → Apply input grid
+- [x] TASK-DH-11 — Implement _compute_fk_positions() helper:
         Pure function (no UI), takes 6×4 DH params array,
         returns list of 7 XYZ positions (base + 6 joint frames)
         using Modified DH matrix multiplication via numpy.
@@ -132,8 +132,8 @@ geometri robot dan bentuk/jangkauan lengan robot.
 
         Show implementation. Wait for approval.
 
-- [ ] TASK-DH-12 — User approves → Apply _compute_fk_positions()
-- [ ] TASK-DH-13 — Implement _plot_stick_diagram() helper:
+- [x] TASK-DH-12 — User approves → Apply _compute_fk_positions()
+- [x] TASK-DH-13 — Implement _plot_stick_diagram() helper:
         Opens matplotlib window with two subplots side by side:
 
         Left plot — Top View (XY plane):
@@ -159,8 +159,8 @@ geometri robot dan bentuk/jangkauan lengan robot.
 
         Show implementation. Wait for approval.
 
-- [ ] TASK-DH-14 — User approves → Apply _plot_stick_diagram()
-- [ ] TASK-DH-15 — Wire buttons:
+- [x] TASK-DH-14 — User approves → Apply _plot_stick_diagram()
+- [x] TASK-DH-15 — Wire buttons:
         Reset button: restore all inputs to _DH_PARAMS defaults
         Plot button:
           1. Read all input values
@@ -170,8 +170,8 @@ geometri robot dan bentuk/jangkauan lengan robot.
 
         Show diff for button wiring. Wait for approval.
 
-- [ ] TASK-DH-16 — User approves → Apply button wiring
-- [ ] TASK-DH-17 — Full test:
+- [x] TASK-DH-16 — User approves → Apply button wiring
+- [x] TASK-DH-17 — Full test:
         [ ] Tab Eksperimen terbuka dengan grid input
         [ ] Semua nilai default sudah terisi dari _DH_PARAMS
         [ ] Ubah nilai a J1 → klik Plot → window matplotlib muncul
@@ -183,14 +183,14 @@ geometri robot dan bentuk/jangkauan lengan robot.
 
 ## Phase 4 — Final verification
 
-- [ ] TASK-DH-18 — Regression test:
+- [x] TASK-DH-18 — Regression test:
         [ ] Tab DH di panel kiri masih berfungsi
         [ ] Sub-tab Realtime: θ update realtime, highlight kuning
         [ ] Sub-tab Eksperimen: input grid, plot, reset semua bekerja
         [ ] Kinematics panel (IK/FK) tidak terpengaruh
         [ ] Semua tab lain tidak terpengaruh
 
-- [ ] TASK-DH-19 — Update TASKPLAN.md utama dengan summary
+- [x] TASK-DH-19 — Update TASKPLAN.md utama dengan summary
 
 ---
 
@@ -217,3 +217,8 @@ Home position: [90, -90, 180, 0, 0, 180] derajat (J1-J6)
 | Tanggal | Perubahan | Catatan |
 |---------|-----------|---------|
 | 2026-07-06 | File dibuat | DH Experiment tab — matplotlib stick diagram |
+| 2026-07-06 | TASKPLAN_DH_EXPERIMENT complete | Sub-tab Eksperimen di panel DH |
+| 2026-07-06 | | Input grid 6 joint × 4 param (a, α, d, θ) |
+| 2026-07-06 | | _compute_fk_positions() via Modified DH matrix |
+| 2026-07-06 | | _plot_stick_diagram() 3D via matplotlib TkAgg thread |
+| 2026-07-06 | | Reset ke default + Plot buttons |

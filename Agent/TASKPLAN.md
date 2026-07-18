@@ -311,3 +311,11 @@ Files to rewrite: bridge.py, routes.py (/api/ros/preview), rviz_launcher.py
 - [x] TASK-46 — Test Execute → robot moves, Waldo X/Y/Z matches input  ✓ PASS
 - [x] TASK-47 — Final review: list all changed files with exact diffs  ✓ COMPLETE
 - [x] TASK-48 — Realtime RViz mirroring verified — all 6 joints confirmed correct  ✓ PASS
+
+---
+
+## Phase 6 — DH Parameter Eksperimen tab
+
+| Tanggal | Task selesai | Catatan |
+|---------|--------------|---------|
+| 2026-07-06 | DH Eksperimen tab selesai | Stick diagram 3D matplotlib dari parameter DH custom |
