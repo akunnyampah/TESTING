@@ -1,16 +1,14 @@
 # Waldo Commander
 
-A web interface for controlling robotic arms, currently tested with the [PAROL6](https://github.com/PCrnjak/PAROL6-Desktop-robot-arm) robot.
+Antarmuka web untuk mengendalikan lengan robot, saat ini diuji dengan robot [PAROL6](https://github.com/PCrnjak/PAROL6-Desktop-robot-arm).
 
-https://github.com/user-attachments/assets/61c5aec4-9611-4f61-b1b0-35f25931e11e
+- **Berbasis browser.** Robot dapat dikendalikan dari perangkat apa pun dalam jaringan tanpa harus terhubung langsung ke arm.
+- **Program Python.** Tulis program robot menggunakan Python, termasuk loop, perhitungan matematika, dan library tambahan. Editor bawaan menyediakan auto-complete, output langsung, dan debugging per langkah.
+- **Simulasi 3D.** Pratinjau jalur gerak, cek keterjangkauan pose, dan geser timeline tanpa harus memakai robot fisik.
+- **Rekam gerakan manual.** Kendalikan robot secara langsung dan rekam gerakannya menjadi kode Python.
+- **Backend fleksibel.** Logika khusus robot berada di balik layer abstraksi [waldoctl](https://github.com/Jepson2k/waldoctl). Robot lain dapat diintegrasikan dengan menerapkan interface yang sama.
 
-- **Browser-based.** Control from any device on the network without being tethered to the arm.
-- **Python programs.** Write robot programs in Python with loops, math, and libraries. Built-in editor with auto-complete, live output, and step-through debugging.
-- **3D simulation.** Preview motion paths, check reachability, and scrub through the timeline — no physical robot needed.
-- **Teach by demonstration.** Control the robot live and record the motions as Python code.
-- **Backend-agnostic.** Robot-specific logic lives behind the [waldoctl](https://github.com/Jepson2k/waldoctl) abstraction layer. Other robots can be integrated by implementing the same interfaces — see the [Backend Development Guide](https://jepson2k.github.io/Waldo-Commander/guides/backend-development/).
-
-## Quick start
+## Mulai Cepat
 
 ```bash
 git clone https://github.com/Jepson2k/Waldo-Commander.git
@@ -19,25 +17,21 @@ pip install -e ".[parol6]"
 waldo-commander
 ```
 
-Open the printed URL. No robot connected? The app auto-starts in simulator mode so you can explore.
+Buka URL yang muncul di terminal. Jika robot belum terhubung, aplikasi akan otomatis berjalan dalam mode simulator sehingga fitur dapat dicoba terlebih dahulu.
 
-For connecting hardware, platform-specific setup, and configuration, see [Getting Started](https://jepson2k.github.io/Waldo-Commander/getting-started/).
+Untuk koneksi hardware, setup platform, dan konfigurasi, lihat dokumentasi [Getting Started](https://jepson2k.github.io/Waldo-Commander/getting-started/).
 
-## Links
+## Tautan
 
-- [Documentation](https://jepson2k.github.io/Waldo-Commander/)
-- [waldoctl](https://github.com/Jepson2k/waldoctl) — robot backend abstraction layer
-- [PAROL6 hardware](https://github.com/PCrnjak/PAROL6-Desktop-robot-arm)
+- [Dokumentasi](https://jepson2k.github.io/Waldo-Commander/)
+- [waldoctl](https://github.com/Jepson2k/waldoctl) — layer abstraksi backend robot
+- [Hardware PAROL6](https://github.com/PCrnjak/PAROL6-Desktop-robot-arm)
 
-## Safety
+## Keselamatan
 
-- This software provides no safety guarantees and assumes no liability
-- User accepts full responsibility for robot operation
-- Simulator mode is not physics-accurate and does not guarantee repeatability on real hardware
-- The digital E-STOP is not a substitute for the hardware emergency stop
-- Incorrect kinematics calculations could result in sudden robotic movements
-- Keep clear of all moving parts during operation
-
-## License
-
-See [LICENSE](LICENSE).
+- Software ini tidak memberikan jaminan keselamatan dan tidak menanggung tanggung jawab atas penggunaan robot.
+- Pengguna bertanggung jawab penuh atas pengoperasian robot.
+- Mode simulator tidak akurat secara fisika dan tidak menjamin hasil yang sama pada hardware asli.
+- E-STOP digital bukan pengganti tombol emergency stop fisik.
+- Perhitungan kinematika yang salah dapat menyebabkan gerakan robot yang tiba-tiba.
+- Jaga jarak aman dari semua bagian robot yang bergerak saat sistem beroperasi.
