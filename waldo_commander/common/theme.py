@@ -1123,10 +1123,10 @@ html, body {
   background: linear-gradient(135deg, var(--overlay-bg-1), var(--overlay-bg-2)) !important;
   backdrop-filter: var(--glass-backdrop);
   -webkit-backdrop-filter: var(--glass-backdrop);
-  width: 800px;
+  width: 85vw;
   max-width: 95vw;
   height: 85vh;
-  max-height: 900px;
+  max-height: 90vh;
   min-height: 500px;
   overflow: hidden;
 }
@@ -1141,10 +1141,50 @@ html, body {
   background: transparent !important;
 }
 
+.tutorial-dialog-card .nicegui-markdown,
+.tutorial-dialog-card .text-md,
+.tutorial-dialog-card .text-sm {
+  font-size: 1.4rem !important;
+  line-height: 1.9;
+}
+
+.tutorial-dialog-card .text-xs {
+  font-size: 1.1rem !important;
+}
+
+.tutorial-dialog-card .nicegui-markdown p,
+.tutorial-dialog-card .nicegui-markdown li,
+.tutorial-dialog-card .nicegui-markdown td {
+  font-size: 1.4rem !important;
+  line-height: 1.9;
+}
+
 /* Help dialog - expand to fit content */
 .help-dialog-card {
   max-width: 95vw;
   max-height: 95vh;
+}
+
+.help-dialog-card .nicegui-markdown,
+.help-dialog-card .text-md,
+.help-dialog-card .text-sm {
+  font-size: 1.4rem !important;
+  line-height: 1.9;
+}
+
+.help-dialog-card .text-xs {
+  font-size: 1.1rem !important;
+}
+
+.help-dialog-card .nicegui-markdown p,
+.help-dialog-card .nicegui-markdown li,
+.help-dialog-card .nicegui-markdown td {
+  font-size: 1.4rem !important;
+  line-height: 1.9;
+}
+
+.help-dialog-card .q-expansion-item {
+  font-size: 0.95rem;
 }
 
 /* ========== Keyboard Key Styling ========== */

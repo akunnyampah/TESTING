@@ -94,7 +94,7 @@ class HelpMenu:
                         with (
                             ui.tab_panels(tabs, value=quickstart_tab)
                             .classes("w-full overflow-hidden")
-                            .style("min-width: 720px; min-height: 700px;")
+                            .style("min-width: 85vw; min-height: 85vh;")
                             .props(
                                 "animated transition-prev=slide-up transition-next=slide-down"
                             )
@@ -102,7 +102,7 @@ class HelpMenu:
                             with (
                                 ui.tab_panel(keybindings_tab)
                                 .classes("p-0")
-                                .style("width: 720px; height: 700px; max-height: 85vh;")
+                                .style("width: 85vw; height: 85vh; max-height: 90vh;")
                             ):
                                 with ui.scroll_area().classes("w-full h-full"):
                                     self._build_keybindings_content()
@@ -110,21 +110,21 @@ class HelpMenu:
                             with (
                                 ui.tab_panel(quickstart_tab)
                                 .classes("p-0")
-                                .style("width: 720px; height: 700px; max-height: 85vh;")
+                                .style("width: 85vw; height: 85vh; max-height: 90vh;")
                             ):
                                 self._build_quickstart_stepper()
 
                             with (
                                 ui.tab_panel(fitur_gui_tab)
                                 .classes("p-0")
-                                .style("width: 720px; height: 700px; max-height: 85vh;")
+                                .style("width: 85vw; height: 85vh; max-height: 90vh;")
                             ):
                                 self._build_fitur_gui_content()
 
                             with (
                                 ui.tab_panel(safety_tab)
                                 .classes("p-0")
-                                .style("width: 720px; height: 700px; max-height: 85vh;")
+                                .style("width: 85vw; height: 85vh; max-height: 90vh;")
                             ):
                                 self._build_safety_content()
 
@@ -225,8 +225,8 @@ class HelpMenu:
             )
             if os.path.exists(video_path):
                 ui.video(video_path).classes("w-full rounded-lg my-2").props(
-                    'preload="metadata"'
-                ).style("max-height: 360px;")
+                    'controls preload="none"'
+                ).style("width: 100%; max-height: 50vh;")
                 return
 
         with ui.card().classes("bg-gray-800 rounded-lg p-4 text-center my-2"):
@@ -905,7 +905,7 @@ class HelpMenu:
                 ui.stepper()
                 .props("vertical header-nav flat active-color=white done-color=grey-5")
                 .classes("p-0")
-                .style("width: 700px;") as self._stepper
+                .style("width: 100%;") as self._stepper
             ):
                 # Safety step (only shown on first visit)
                 if include_safety_step:
