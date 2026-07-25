@@ -104,7 +104,7 @@ class KinematicsPanel:
                             ik_out_j6 = ui.label("J6: —").classes("text-sm").mark("ik-out-j6")
 
                     with ui.row().classes("gap-2 w-full"):
-                        preview_btn = ui.button("Preview").mark("ik-preview-btn")
+                        preview_btn = ui.button("Calculate").mark("ik-preview-btn")
                         execute_btn = (
                             ui.button("Execute")
                             .props("disabled")

@@ -94,7 +94,7 @@ class HelpMenu:
                         with (
                             ui.tab_panels(tabs, value=quickstart_tab)
                             .classes("w-full overflow-hidden")
-                            .style("min-width: 720px; min-height: 700px;")
+                            .style("min-width: 85vw; min-height: 85vh;")
                             .props(
                                 "animated transition-prev=slide-up transition-next=slide-down"
                             )
@@ -102,7 +102,7 @@ class HelpMenu:
                             with (
                                 ui.tab_panel(keybindings_tab)
                                 .classes("p-0")
-                                .style("width: 720px; height: 700px; max-height: 85vh;")
+                                .style("width: 85vw; height: 85vh; max-height: 90vh;")
                             ):
                                 with ui.scroll_area().classes("w-full h-full"):
                                     self._build_keybindings_content()
@@ -110,21 +110,21 @@ class HelpMenu:
                             with (
                                 ui.tab_panel(quickstart_tab)
                                 .classes("p-0")
-                                .style("width: 720px; height: 700px; max-height: 85vh;")
+                                .style("width: 85vw; height: 85vh; max-height: 90vh;")
                             ):
                                 self._build_quickstart_stepper()
 
                             with (
                                 ui.tab_panel(fitur_gui_tab)
                                 .classes("p-0")
-                                .style("width: 720px; height: 700px; max-height: 85vh;")
+                                .style("width: 85vw; height: 85vh; max-height: 90vh;")
                             ):
                                 self._build_fitur_gui_content()
 
                             with (
                                 ui.tab_panel(safety_tab)
                                 .classes("p-0")
-                                .style("width: 720px; height: 700px; max-height: 85vh;")
+                                .style("width: 85vw; height: 85vh; max-height: 90vh;")
                             ):
                                 self._build_safety_content()
 
@@ -703,13 +703,13 @@ class HelpMenu:
 
                     **Apa yang Bisa Dilakukan?**
 
-                    - ✓ Gerak manual per-sendi (Joint Jog)
-                    - ✓ Gerak berdasarkan koordinat (Cartesian Jog)
-                    - ✓ Hitung dan visualisasi FK/IK
-                    - ✓ Rekam gerakan jadi program otomatis
-                    - ✓ Jalankan program Python untuk urutan gerakan
-                    - ✓ Kontrol I/O (relay, sensor)
-                    - ✓ Monitor posisi real-time di RViz (via ROS 2)
+                    - Gerak manual per-sendi (Joint Jog)
+                    - Gerak berdasarkan koordinat (Cartesian Jog)
+                    - Hitung dan visualisasi FK/IK
+                    - Rekam gerakan jadi program otomatis
+                    - Jalankan program Python untuk urutan gerakan
+                    - Kontrol I/O (relay, sensor)
+                    - Monitor posisi real-time di RViz (via ROS 2)
                 """,
                 "video_desc": "Video pengenalan robot dan cara kerjanya secara umum",
                 "video_filename": "qs_tentang_robot.mp4",
@@ -729,9 +729,9 @@ class HelpMenu:
 
                     Sifat FK:
 
-                    -✓ Selalu ada jawaban (tidak bisa gagal)
-                    -✓ Jawaban selalu satu (tidak ambigu)
-                    -✓ Perhitungan cepat dan sederhana
+                    - Selalu ada jawaban (tidak bisa gagal)
+                    - Jawaban selalu satu (tidak ambigu)
+                    - Perhitungan cepat dan sederhana
 
                     **Inverse Kinematics (IK) — Dari Posisi ke Sudut:**
 
@@ -745,9 +745,9 @@ class HelpMenu:
 
                     Sifat IK:
 
-                    -✗ Bisa tidak ada solusi (target di luar jangkauan)
-                    -✗ Bisa banyak solusi (siku atas vs siku bawah — sama-sama benar)
-                    -✓ Lebih intuitif untuk pengguna (input koordinat, bukan sudut)
+                    - Bisa tidak ada solusi (target di luar jangkauan)
+                    - Bisa banyak solusi (siku atas vs siku bawah — sama-sama benar)
+                    - Lebih intuitif untuk pengguna (input koordinat, bukan sudut)
 
                     **Mengapa IK Lebih Sulit?**
 
@@ -892,10 +892,10 @@ class HelpMenu:
 
                     **Tips:**
 
-                    - → Selalu mulai di mode Simulator sebelum coba di Robot asli
-                    - → Baca tab Safety minimal sekali sebelum menyentuh hardware
-                    - → Tab DH Parameters di GUI menampilkan θ realtime saat robot bergerak
-                    - → Jika ragu dengan suatu fitur, buka tab Fitur GUI di Help ini
+                    - Selalu mulai di mode Simulator sebelum coba di Robot asli
+                    - Baca tab Safety minimal sekali sebelum menyentuh hardware
+                    - Tab DH Parameters di GUI menampilkan θ realtime saat robot bergerak
+                    - Jika ragu dengan suatu fitur, buka tab Fitur GUI di Help ini
                 """,
             },
         ]
@@ -905,7 +905,7 @@ class HelpMenu:
                 ui.stepper()
                 .props("vertical header-nav flat active-color=white done-color=grey-5")
                 .classes("p-0")
-                .style("width: 700px;") as self._stepper
+                .style("width: 100%;") as self._stepper
             ):
                 # Safety step (only shown on first visit)
                 if include_safety_step:
